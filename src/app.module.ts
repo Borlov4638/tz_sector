@@ -14,7 +14,7 @@ import { JwtModule } from '@nestjs/jwt';
       password: '12345',
       database: 'tz_database',
       autoLoadEntities:true,
-      synchronize: true,
+      synchronize: false,
     }),
     UsersModule,
     AuthModule,
