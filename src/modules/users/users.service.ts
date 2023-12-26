@@ -5,11 +5,13 @@ import { UserEntity } from "./entities/user.entity";
 import { Repository } from "typeorm";
 import * as bcrypt from 'bcrypt';
 import { UsersPaginationDto } from "./dtos/user-pagination.dto";
+import { UserUpdateDto } from "./dtos/user-update.dto";
+import { createWriteStream } from "fs";
 
 @Injectable()
 export class UserService{
     constructor(
-        @InjectRepository(UserEntity) private userRepo : Repository<UserEntity>
+        @InjectRepository(UserEntity) private userRepo : Repository<UserEntity>,
     ){}
     
     async userRegister(userData: UserRegistrationDto){
@@ -56,5 +58,28 @@ export class UserService{
         };
         return mappedResponse;
   
+    }
+
+    async updateUser(updateData: UserUpdateDto, photo: Express.Multer.File, userId : number){
+
+        const user = await this.userRepo.findOneBy({id: userId})
+        if(!user) throw new NotFoundException()
+
+        if(photo){
+            const extention = photo.mimetype.split('/')[1]
+            const userPhotoName = `${user.id}.${extention}`
+            const ws = createWriteStream(`user_photos/${userPhotoName}`)
+            ws.write(photo.buffer)
+
+            user.photo = userPhotoName
+        }
+
+        user.email = updateData.email ? updateData.email : user.email
+        user.name = updateData.name ? updateData.email : user.name
+        user.sex = updateData.sex ? updateData.sex : user.sex
+        user.surname = updateData.surname ? updateData.surname : user.surname
+        
+        return await this.userRepo.save(user)
+        
     }
 }

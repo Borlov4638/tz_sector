@@ -1,7 +1,9 @@
-import { Body, Controller, FileTypeValidator, Get, MaxFileSizeValidator, Param, ParseFileOptions, ParseFilePipe, ParseIntPipe, Post, Put, Query, UploadedFile } from "@nestjs/common";
+import { Body, Controller, FileTypeValidator, Get, MaxFileSizeValidator, Param, ParseFileOptions, ParseFilePipe, ParseIntPipe, Post, Put, Query, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { UserService } from "./users.service";
 import { UserRegistrationDto } from "./dtos/user-registartion.dto";
 import { UsersPaginationDto } from "./dtos/user-pagination.dto";
+import { UserUpdateDto } from "./dtos/user-update.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
 
 @Controller()
 
@@ -25,12 +27,15 @@ export class UserController{
         return this.userService.userRegister(data)
     }
 
-    @Put()
+    @UseInterceptors(FileInterceptor("file", {}))
+    @Put('user/:id')
     updateUser(
-        @UploadedFile(new ParseFilePipe({ fileIsRequired: true, validators: [new MaxFileSizeValidator({ maxSize: 1e7 }), new FileTypeValidator({ fileType: /^image\/+/ })] } as ParseFileOptions))
+        @Param('id', ParseIntPipe) userId : number,
+        @Body() data : UserUpdateDto,
+        @UploadedFile(new ParseFilePipe({ fileIsRequired: false, validators: [new MaxFileSizeValidator({ maxSize: 1e7 }), new FileTypeValidator({ fileType: /^image\/+/ })] } as ParseFileOptions))
         file : Express.Multer.File
     ){
-        
+        return this.userService.updateUser(data, file, userId)
     }
 
 }
